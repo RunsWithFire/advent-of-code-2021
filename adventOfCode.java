@@ -5,129 +5,115 @@ import java.io.*;
 public class adventOfCode {
     
     public static void main(String args[]) {
-        // This is horribly inefficient but I missed a few days and I'm playing catchup!
-        List<String> inputSegments = new ArrayList<>();
-        List<String> inputOutput = new ArrayList<>();
-        List<String> fullSegments = new ArrayList<>();
-        List<String> fullOutputs = new ArrayList<>();
-        readDay8Input(inputSegments, inputOutput, fullSegments, fullOutputs);
-        
-        int count=0;
-        for (String output : inputOutput) {
-            if (output.length() == 2 || output.length() == 4 || output.length() == 3 || output.length() == 7) {
-                count++;
-            }
-        }
-        System.out.println("Part 1 - " + count);
-
+        // Again - not clean but I'm playing catchup so I'm just trying to make it work.
+        List<List<Integer>> input = readInputToIntMatrix("day9Input.txt");
         int score = 0;
+        List<Integer> rowCoord = new ArrayList<>();
+        List<Integer> colCoord = new ArrayList<>();
 
-        for (int i=0; i<fullSegments.size(); i++) { 
-            String segments = fullSegments.get(i);
-            String[] thisSegments = segments.split(" ");
-            String outputs = fullOutputs.get(i);
-            Map<String, String> segmentMap = new HashMap<>();
-            Map<String, String> numberMap = new HashMap<>();
+        for (int i=0; i<input.size(); i++) {
+            for (int j=0; j<input.get(i).size(); j++) {
+                int thisVal = input.get(i).get(j);
+                boolean checkUp = false;
+                boolean checkDown = false;
+                boolean checkLeft = false;
+                boolean checkRight = false;
 
-            for (int j=0; j<thisSegments.length; j++) { 
-                String sorted = thisSegments[j].chars()
-                    .sorted()
-                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                    .toString();
-                thisSegments[j] = sorted;
-            }
-
-            // Get 1, 4, 7, and 8
-            for (String segment : thisSegments) {
-                if (segment.length() == 2) {
-                    segmentMap.put(segment, "1");
-                    numberMap.put("1", segment);
-                }
-                if (segment.length() == 4) {
-                    segmentMap.put(segment, "4");
-                    numberMap.put("4", segment);
-                }
-                if (segment.length() == 3) {
-                    segmentMap.put(segment, "7");
-                    numberMap.put("7", segment);
-                }
-                if (segment.length() == 7) {
-                    segmentMap.put(segment, "8");
-                    numberMap.put("8", segment);
-                }
-            }
-
-            // Get 3 and 6
-            for (String segment : thisSegments) {
-                if (segment.length() == 5 && stringContains(segment, numberMap.get("1"))) {
-                    segmentMap.put(segment, "3");
-                    numberMap.put("3", segment);
+                // CheckUp
+                if (i == 0) {
+                    checkUp = true;
+                } else if (thisVal < input.get(i-1).get(j)) {
+                    checkUp = true;
+                } else {
+                    checkUp = false;
                 }
 
-                if (segment.length() == 6 && !stringContains(segment, numberMap.get("1"))) {
-                    segmentMap.put(segment, "6");
-                    numberMap.put("6", segment);
+                // CheckDown
+                if (i == input.size()-1) {
+                    checkDown = true;
+                } else if (thisVal < input.get(i+1).get(j)) {
+                    checkDown = true;
+                } else {
+                    checkDown = false;
                 }
-            }
 
-            // Get 9
-            for (String segment : thisSegments) {
-                if (segment.length() == 6 && stringContains(segment, numberMap.get("3"))) {
-                    segmentMap.put(segment, "9");
-                    numberMap.put("9", segment);
+                // CheckLeft
+                if (j == 0) {
+                    checkLeft = true;
+                } else if (thisVal < input.get(i).get(j-1)) {
+                    checkLeft = true;
+                } else {
+                    checkLeft = false;
+                }
+
+                // CheckRight
+                if (j == input.get(i).size()-1) {
+                    checkRight = true;
+                } else if (thisVal < input.get(i).get(j+1)) {
+                    checkRight = true;
+                } else {
+                    checkRight = false;
+                }
+
+                if (checkUp && checkDown && checkLeft && checkRight) {
+                    rowCoord.add(i);
+                    colCoord.add(j);
+                    score = score + (thisVal + 1);
                 }
             }
-
-            // Get 0
-            for (String segment : thisSegments) {
-                if (segment.length() == 6 && stringContains(segment, numberMap.get("1")) && !stringContains(segment, numberMap.get("9"))) {
-                    segmentMap.put(segment, "0");
-                    numberMap.put("0", segment);
-                }
-            }
-
-            // Get 5
-            for (String segment : thisSegments) {
-                if (segment.length() == 5 && !stringContains(segment, numberMap.get("1"))) {
-                    String nine = numberMap.get("9");
-
-                    for (char ch : segment.toCharArray()) {
-                        nine = nine.replaceAll(String.valueOf(ch), "");
-                    }
-
-                    if (nine.length() == 1) {
-                        segmentMap.put(segment, "5");
-                        numberMap.put("5", segment);
-                    }
-                }
-            }
-
-            // Get 2
-            for (String segment : thisSegments) {
-                if (segment.length() == 5 && !stringContains(segment, numberMap.get("3")) && !stringContains(segment, numberMap.get("5"))) {
-                    segmentMap.put(segment, "2");
-                    numberMap.put("2", segment);
-                }
-            }
-
-            StringBuilder finalString = new StringBuilder();
-            String[] outputsSplit = outputs.split(" ");
-
-            for (int j=0; j<outputsSplit.length; j++) { 
-                String sorted = outputsSplit[j].chars()
-                    .sorted()
-                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                    .toString();
-                outputsSplit[j] = sorted;
-            }
-
-            for (int j=0; j<outputsSplit.length; j++) {
-                String output = outputsSplit[j];
-                finalString.append(segmentMap.get(output));
-            }
-            score = score + Integer.valueOf(finalString.toString());
         }
-        System.out.println("Part 2 - " + score);
+        System.out.println("Part 1 - " + score);
+
+        boolean[][] visited = new boolean[input.size()][input.get(0).size()];
+        int top1 = 1;
+        int top2 = 1;
+        int top3 = 1;
+
+        for (int i=0; i<rowCoord.size(); i++) {
+            int size = 0;
+            size = dfs(input, visited, rowCoord.get(i), colCoord.get(i), size);
+            
+            if (size >= top1) {
+                top3 = top2;
+                top2 = top1;
+                top1= size;
+            } else if (size >= top2) {
+                top3 = top2;
+                top2 = size;
+            } else if (size >= top3) {
+                top3 = size;
+            }
+            
+        }
+        System.out.println("Part 2 - " + top1 * top2 * top3);
+    }
+
+    public static int dfs(List<List<Integer>> input, boolean[][] visited, int row, int col, int size) {
+        visited[row][col] = true;
+        size++;
+        int thisVal = input.get(row).get(col);
+
+        // CheckUp
+        if (row != 0 && thisVal < input.get(row-1).get(col) && input.get(row-1).get(col) != 9 && !visited[row-1][col]) {
+            size = dfs(input, visited, row-1, col, size);
+        }
+
+        // CheckDown
+        if (row != input.size()-1 && thisVal < input.get(row+1).get(col) && input.get(row+1).get(col) != 9 && !visited[row+1][col]) {
+            size = dfs(input, visited, row+1, col, size);
+        }
+
+        // CheckLeft
+        if (col != 0 && thisVal < input.get(row).get(col-1) && input.get(row).get(col-1) != 9 && !visited[row][col-1]) {
+            size = dfs(input, visited, row, col-1, size);
+        }
+
+        // CheckRight
+        if (col != input.get(row).size()-1 && thisVal < input.get(row).get(col+1) && input.get(row).get(col+1) != 9 && !visited[row][col+1]) {
+            size = dfs(input, visited, row, col+1, size);
+        }
+
+        return size;
     }
 
     public static boolean stringContains(String longer, String shorter) {
@@ -615,6 +601,31 @@ public class adventOfCode {
         }
 
         return;
+    }
+
+    public static List<List<Integer>> readInputToIntMatrix(String filename) {
+        List<List<Integer>> finalList = new ArrayList<>();
+
+        try {
+            File myObj = new File(filename);
+            Scanner myReader = new Scanner(myObj);
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                List<Integer> rowList = new ArrayList<>();
+                
+                for (int i=0; i<data.length(); i++) {
+                    rowList.add(Character.getNumericValue(data.charAt(i)));
+                }
+                finalList.add(rowList);
+
+            }
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println(filename + " not found!");
+            e.printStackTrace();
+        }
+
+        return finalList;
     }
 
 }
