@@ -6,74 +6,160 @@ public class adventOfCode {
     
     public static void main(String args[]) {
         // Again - not clean but I'm playing catchup so I'm just trying to make it work.
-        List<String> input = readInputToStringList("day10Input.txt");
-        System.out.println(getBracketScore(input));
+        int[][] input = readInputToIntMatrix10("day11Input.txt");
+        System.out.println(getFlashCount(input));
     }
 
-    public static Long getBracketScore(List<String> input) {
-        int score = 0;
-        Map<Character, Integer> scoreMap = new HashMap<>();
-        scoreMap.put(')', 3);
-        scoreMap.put(']', 57);
-        scoreMap.put('}', 1197);
-        scoreMap.put('>', 25137);
+    public static int getFlashCount(int[][] input) {
+        int steps = 1000;
+        int flashCount = 0;
+        int thisStepFlashCount = 0;
 
-        Map<Character, Character> bracketMap = new HashMap<>();
-        bracketMap.put('(', ')');
-        bracketMap.put('[', ']');
-        bracketMap.put('{', '}');
-        bracketMap.put('<', '>');
-        Set<Character> bracketSet = bracketMap.keySet();
+        for (int i=0; i<steps; i++) {
+            boolean[][] hasFlashed = new boolean[10][10];
+            thisStepFlashCount = 0;
 
-        List<Stack<Character>> incompleteStack = new ArrayList<>();
-        
-        for (int i=0; i<input.size(); i++) {
-            boolean isCorrupted = false;
-            String thisLine = input.get(i);
-            Stack<Character> bracketStack = new Stack();
+            // Step 1
+            for (int j=0; j<input.length; j++) {
+                for (int k=0; k<input[j].length; k++) {
+                    input[j][k] = input[j][k] + 1;
+                }
+            }
 
-            for (int j=0; j<thisLine.length(); j++) {
-                char thisChar = thisLine.charAt(j);
-                if (bracketSet.contains(thisChar)) {
-                    bracketStack.push(thisChar);
-                } else {
-                    char checkBracket = bracketStack.pop();
-                    if (bracketMap.get(checkBracket) != thisChar && !isCorrupted) {
-                        isCorrupted = true;
-                        score = score + scoreMap.get(thisChar);
+            // Step 2
+            for (int j=0; j<input.length; j++) {
+                for (int k=0; k<input[j].length; k++) {
+                    flash(input, j, k, hasFlashed);
+                }
+            }
+
+            // Step 3
+            for (int j=0; j<input.length; j++) {
+                for (int k=0; k<input[j].length; k++) {
+                    if (hasFlashed[j][k]) {
+                        thisStepFlashCount++;
+                        input[j][k] = 0;
                     }
                 }
             }
 
-            if (!bracketStack.isEmpty() && !isCorrupted) {
-                incompleteStack.add(bracketStack);
+            flashCount = flashCount + thisStepFlashCount;
+            if (thisStepFlashCount == 100) {
+                return i + 1;
             }
         }
-
-        // return score; // - Part 1
-
-        List<Long> finalScores = new ArrayList<>();
-        scoreMap.clear();
-        scoreMap.put(')', 1);
-        scoreMap.put(']', 2);
-        scoreMap.put('}', 3);
-        scoreMap.put('>', 4);
-
-        for (int i=0; i<incompleteStack.size(); i++) {
-            Stack thisStack = incompleteStack.get(i);
-            Long thisScore = 0L;
-            while (!thisStack.isEmpty()) {
-                thisScore = thisScore * 5;
-                thisScore = thisScore + scoreMap.get(bracketMap.get(thisStack.pop()));
-            }
-            finalScores.add(thisScore);
-            //System.out.println(thisScore);
-        }
-
-        Collections.sort(finalScores);
-
-        return finalScores.get((int) finalScores.size()/2);
+        
+        System.out.println("Need more steps!");
+        return flashCount;
     }
+
+    public static void flash(int[][] input, int row, int col, boolean[][] hasFlashed) {
+        if (!hasFlashed[row][col] && input[row][col] > 9) { 
+            hasFlashed[row][col] = true;           
+            boolean hasLeft = col > 0;
+            boolean hasRight = col < 9;
+            boolean hasUp = row > 0;
+            boolean hasDown = row < 9;
+
+            if (hasLeft && hasUp) {
+                input[row-1][col-1] = input[row-1][col-1] + 1;
+                flash(input, row-1, col-1, hasFlashed);
+            }
+            if (hasUp) {
+                input[row-1][col] = input[row-1][col] + 1;
+                flash(input, row-1, col, hasFlashed);
+            }
+            if (hasUp && hasRight) {
+                input[row-1][col+1] = input[row-1][col+1] + 1;
+                flash(input, row-1, col+1, hasFlashed);
+            }
+            if (hasLeft) {
+                input[row][col-1] = input[row][col-1] + 1;
+                flash(input, row, col-1, hasFlashed);
+            }
+            if (hasRight) {
+                input[row][col+1] = input[row][col+1] + 1;
+                flash(input, row, col+1, hasFlashed);
+            }
+            if (hasDown && hasLeft) {
+                input[row+1][col-1] = input[row+1][col-1] + 1;
+                flash(input, row+1, col-1, hasFlashed);
+            }
+            if (hasDown) {
+                input[row+1][col] = input[row+1][col] + 1;
+                flash(input, row+1, col, hasFlashed);
+            }
+            if (hasDown && hasRight) {
+                input[row+1][col+1] = input[row+1][col+1] + 1;
+                flash(input, row+1, col+1, hasFlashed);
+            }
+        }
+    }
+
+    // public static Long getBracketScore(List<String> input) {
+    //     int score = 0;
+    //     Map<Character, Integer> scoreMap = new HashMap<>();
+    //     scoreMap.put(')', 3);
+    //     scoreMap.put(']', 57);
+    //     scoreMap.put('}', 1197);
+    //     scoreMap.put('>', 25137);
+
+    //     Map<Character, Character> bracketMap = new HashMap<>();
+    //     bracketMap.put('(', ')');
+    //     bracketMap.put('[', ']');
+    //     bracketMap.put('{', '}');
+    //     bracketMap.put('<', '>');
+    //     Set<Character> bracketSet = bracketMap.keySet();
+
+    //     List<Stack<Character>> incompleteStack = new ArrayList<>();
+        
+    //     for (int i=0; i<input.size(); i++) {
+    //         boolean isCorrupted = false;
+    //         String thisLine = input.get(i);
+    //         Stack<Character> bracketStack = new Stack();
+
+    //         for (int j=0; j<thisLine.length(); j++) {
+    //             char thisChar = thisLine.charAt(j);
+    //             if (bracketSet.contains(thisChar)) {
+    //                 bracketStack.push(thisChar);
+    //             } else {
+    //                 char checkBracket = bracketStack.pop();
+    //                 if (bracketMap.get(checkBracket) != thisChar && !isCorrupted) {
+    //                     isCorrupted = true;
+    //                     score = score + scoreMap.get(thisChar);
+    //                 }
+    //             }
+    //         }
+
+    //         if (!bracketStack.isEmpty() && !isCorrupted) {
+    //             incompleteStack.add(bracketStack);
+    //         }
+    //     }
+
+    //     // return score; // - Part 1
+
+    //     List<Long> finalScores = new ArrayList<>();
+    //     scoreMap.clear();
+    //     scoreMap.put(')', 1);
+    //     scoreMap.put(']', 2);
+    //     scoreMap.put('}', 3);
+    //     scoreMap.put('>', 4);
+
+    //     for (int i=0; i<incompleteStack.size(); i++) {
+    //         Stack thisStack = incompleteStack.get(i);
+    //         Long thisScore = 0L;
+    //         while (!thisStack.isEmpty()) {
+    //             thisScore = thisScore * 5;
+    //             thisScore = thisScore + scoreMap.get(bracketMap.get(thisStack.pop()));
+    //         }
+    //         finalScores.add(thisScore);
+    //         //System.out.println(thisScore);
+    //     }
+
+    //     Collections.sort(finalScores);
+
+    //     return finalScores.get((int) finalScores.size()/2);
+    // }
 
     public static int dfs(List<List<Integer>> input, boolean[][] visited, int row, int col, int size) {
         visited[row][col] = true;
@@ -590,7 +676,7 @@ public class adventOfCode {
         return;
     }
 
-    public static List<List<Integer>> readInputToIntMatrix(String filename) {
+    public static List<List<Integer>> readInputToIntListMatrix(String filename) {
         List<List<Integer>> finalList = new ArrayList<>();
 
         try {
@@ -613,6 +699,30 @@ public class adventOfCode {
         }
 
         return finalList;
+    }
+
+    public static int[][] readInputToIntMatrix10(String filename) {
+        int[][] intArray = new int[10][10];
+
+        try {
+            File myObj = new File(filename);
+            Scanner myReader = new Scanner(myObj);
+            int i = 0;
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                
+                for (int j=0; j<data.length(); j++) {
+                    intArray[i][j] = (Character.getNumericValue(data.charAt(j)));
+                }
+                i++;
+            }
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println(filename + " not found!");
+            e.printStackTrace();
+        }
+
+        return intArray;
     }
 
 }
