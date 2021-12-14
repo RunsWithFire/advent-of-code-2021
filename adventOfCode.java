@@ -6,86 +6,73 @@ public class adventOfCode {
     
     public static void main(String args[]) {
         // Again - not clean but I'm playing catchup so I'm just trying to make it work.
-        List<List<Integer>> input = readInputToIntMatrix("day9Input.txt");
+        List<String> input = readInputToStringList("day10Input.txt");
+        System.out.println(getBracketScore(input));
+    }
+
+    public static Long getBracketScore(List<String> input) {
         int score = 0;
-        List<Integer> rowCoord = new ArrayList<>();
-        List<Integer> colCoord = new ArrayList<>();
+        Map<Character, Integer> scoreMap = new HashMap<>();
+        scoreMap.put(')', 3);
+        scoreMap.put(']', 57);
+        scoreMap.put('}', 1197);
+        scoreMap.put('>', 25137);
 
+        Map<Character, Character> bracketMap = new HashMap<>();
+        bracketMap.put('(', ')');
+        bracketMap.put('[', ']');
+        bracketMap.put('{', '}');
+        bracketMap.put('<', '>');
+        Set<Character> bracketSet = bracketMap.keySet();
+
+        List<Stack<Character>> incompleteStack = new ArrayList<>();
+        
         for (int i=0; i<input.size(); i++) {
-            for (int j=0; j<input.get(i).size(); j++) {
-                int thisVal = input.get(i).get(j);
-                boolean checkUp = false;
-                boolean checkDown = false;
-                boolean checkLeft = false;
-                boolean checkRight = false;
+            boolean isCorrupted = false;
+            String thisLine = input.get(i);
+            Stack<Character> bracketStack = new Stack();
 
-                // CheckUp
-                if (i == 0) {
-                    checkUp = true;
-                } else if (thisVal < input.get(i-1).get(j)) {
-                    checkUp = true;
+            for (int j=0; j<thisLine.length(); j++) {
+                char thisChar = thisLine.charAt(j);
+                if (bracketSet.contains(thisChar)) {
+                    bracketStack.push(thisChar);
                 } else {
-                    checkUp = false;
-                }
-
-                // CheckDown
-                if (i == input.size()-1) {
-                    checkDown = true;
-                } else if (thisVal < input.get(i+1).get(j)) {
-                    checkDown = true;
-                } else {
-                    checkDown = false;
-                }
-
-                // CheckLeft
-                if (j == 0) {
-                    checkLeft = true;
-                } else if (thisVal < input.get(i).get(j-1)) {
-                    checkLeft = true;
-                } else {
-                    checkLeft = false;
-                }
-
-                // CheckRight
-                if (j == input.get(i).size()-1) {
-                    checkRight = true;
-                } else if (thisVal < input.get(i).get(j+1)) {
-                    checkRight = true;
-                } else {
-                    checkRight = false;
-                }
-
-                if (checkUp && checkDown && checkLeft && checkRight) {
-                    rowCoord.add(i);
-                    colCoord.add(j);
-                    score = score + (thisVal + 1);
+                    char checkBracket = bracketStack.pop();
+                    if (bracketMap.get(checkBracket) != thisChar && !isCorrupted) {
+                        isCorrupted = true;
+                        score = score + scoreMap.get(thisChar);
+                    }
                 }
             }
-        }
-        System.out.println("Part 1 - " + score);
 
-        boolean[][] visited = new boolean[input.size()][input.get(0).size()];
-        int top1 = 1;
-        int top2 = 1;
-        int top3 = 1;
-
-        for (int i=0; i<rowCoord.size(); i++) {
-            int size = 0;
-            size = dfs(input, visited, rowCoord.get(i), colCoord.get(i), size);
-            
-            if (size >= top1) {
-                top3 = top2;
-                top2 = top1;
-                top1= size;
-            } else if (size >= top2) {
-                top3 = top2;
-                top2 = size;
-            } else if (size >= top3) {
-                top3 = size;
+            if (!bracketStack.isEmpty() && !isCorrupted) {
+                incompleteStack.add(bracketStack);
             }
-            
         }
-        System.out.println("Part 2 - " + top1 * top2 * top3);
+
+        // return score; // - Part 1
+
+        List<Long> finalScores = new ArrayList<>();
+        scoreMap.clear();
+        scoreMap.put(')', 1);
+        scoreMap.put(']', 2);
+        scoreMap.put('}', 3);
+        scoreMap.put('>', 4);
+
+        for (int i=0; i<incompleteStack.size(); i++) {
+            Stack thisStack = incompleteStack.get(i);
+            Long thisScore = 0L;
+            while (!thisStack.isEmpty()) {
+                thisScore = thisScore * 5;
+                thisScore = thisScore + scoreMap.get(bracketMap.get(thisStack.pop()));
+            }
+            finalScores.add(thisScore);
+            //System.out.println(thisScore);
+        }
+
+        Collections.sort(finalScores);
+
+        return finalScores.get((int) finalScores.size()/2);
     }
 
     public static int dfs(List<List<Integer>> input, boolean[][] visited, int row, int col, int size) {
