@@ -22,7 +22,7 @@ public class day12 {
             return 1;
         } else {
             for (Cavern connection : cavern.connections) {
-                if (connection.isLarge || !cavernPath.contains(connection)) {
+                if ((connection.isLarge || !hasSmallDuplicates(cavernPath) || !cavernPath.contains(connection)) && !connection.name.equals("start")) {
                     count = count + getCavernPaths(cavernPath, connection);
                 }
             }
@@ -30,6 +30,20 @@ public class day12 {
 
         cavernPath.remove(cavern);
         return count;
+    }
+
+    public static boolean hasSmallDuplicates(List<Cavern> cavernPath) {
+        boolean hasDuplicates = false;
+        Set<Cavern> cavernSet = new HashSet<>();
+
+        for (Cavern cavern : cavernPath) {
+            if (!cavern.isLarge && cavernSet.contains(cavern)) {
+                hasDuplicates = true;
+            }
+            cavernSet.add(cavern);
+        }
+
+        return hasDuplicates;
     }
 
     public static Cavern buildCavernGraph(List<String> input, List<Cavern> cavernList) {
