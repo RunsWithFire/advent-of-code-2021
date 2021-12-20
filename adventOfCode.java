@@ -5,29 +5,58 @@ import java.io.*;
 public class adventOfCode {
     
     public static void main(String args[]) {
-        List<String> foldInstructions = new ArrayList<>();
-        char[][] input = readDay13Input(foldInstructions);
+        Map<String, String> pairMap = new HashMap<>();
+        List<String> input = readDay14Input(pairMap);
 
-        for (String instruction : foldInstructions) {
-            String[] instructionSplit = instruction.split("=");
-            char direction = instructionSplit[0].charAt(instructionSplit[0].length()-1);
-            int lineNum = Integer.valueOf(instructionSplit[1]);
+        List<String> output = polymerize(input, pairMap);
 
-            if (direction == 'x') {
-                input = foldLeft(input, lineNum);
+        System.out.println(getMostLeastDifferenceElement(output));
+    }
+
+    public static int getMostLeastDifferenceElement(List<String> input) {
+        Map<String, Integer> elementCount = new HashMap<>();
+        for (String element : input) {
+            if (elementCount.get(element) == null) {
+                elementCount.put(element, 1);
             } else {
-                input = foldUp(input, lineNum);
+                elementCount.put(element, elementCount.get(element)+1);
             }
         }
 
-        for (int i=0; i<input.length; i++) {
-            for (int j=0; j<input[i].length; j++) {
-                System.out.print(input[i][j] + " ");
+        int maxCount = Integer.MIN_VALUE;
+        int minCount = Integer.MAX_VALUE;
+        for (Map.Entry<String, Integer> entry : elementCount.entrySet()) {
+            if (entry.getValue() >= maxCount) {
+                maxCount = entry.getValue();
             }
-            System.out.println();
+            if (entry.getValue() <= minCount) {
+                minCount = entry.getValue();
+            }
+        }
+        return maxCount - minCount;
+    }
+
+    public static List<String> polymerize(List<String> input, Map<String, String> pairMap) {
+        Queue<String> currentInput = new LinkedList<>();
+        Queue<String> generated = new LinkedList<>();
+        int steps = 10;
+
+        for (int i=0; i<steps; i++) { //steps loop
+            currentInput.addAll(input);
+            for (int j=0; j<input.size()-1; j++) {
+                String thisPair = input.get(j) + input.get(j+1);
+                generated.add(pairMap.get(thisPair));
+            }
+
+            input.clear();
+            while (generated.peek() != null) {
+                input.add(currentInput.poll());
+                input.add(generated.poll());
+            }
+            input.add(currentInput.poll());
         }
 
-        System.out.println(countDots(input));
+        return input;
     }
 
     public static int countDots(char[][] input) {
@@ -943,6 +972,31 @@ public class adventOfCode {
         }
 
         return new char[0][0];
+    }
+
+    public static List<String> readDay14Input(Map<String, String> pairMap) {
+        List<String> input = new ArrayList<>();
+        try {
+            File myObj = new File("day14Input.txt");
+            Scanner myReader = new Scanner(myObj);
+            String data = myReader.nextLine();
+            for (int i=0; i<data.length(); i++) {
+                input.add(String.valueOf(data.charAt(i)));
+            }
+            myReader.nextLine();
+
+            while (myReader.hasNextLine()) {
+                data = myReader.nextLine();
+                String[] splitData = data.split(" -> ");
+                pairMap.put(splitData[0], splitData[1]);
+            }
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("day14Input.txt not found!");
+            e.printStackTrace();
+        }
+
+        return input;
     }
 
 }
